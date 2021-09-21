@@ -15,8 +15,19 @@
  */
 package io.gravitee.service.geoip;
 
+import io.vertx.core.Future;
+import io.vertx.core.Vertx;
+import io.vertx.core.eventbus.Message;
+import io.vertx.core.eventbus.ReplyException;
+import io.vertx.core.json.JsonObject;
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -24,52 +35,84 @@ import org.junit.Test;
  */
 public class GeoIPServiceTest {
 
-    private GeoIPService processor = new GeoIPService();
+    public static final String GRAVITEE_IO_WEBSITE_IP = "75.2.70.75";
+    private static GeoIPService processor;
+    private static Vertx vertx;
 
-    @Before
-    public void setUp() throws Exception {
-    //    processor.start();
+    @BeforeClass
+    public static void beforeClass() throws Exception {
+        vertx = Vertx.vertx();
+        processor = new GeoIPService(vertx);
+        processor.start();
     }
 
-    /*
+    @AfterClass
+    public static void afterClass() throws Exception {
+        processor.stop();
+        vertx.close();
+    }
+
+    @Before
+    public void setUp() {
+    }
+
     @Test
     public void shouldProcessEvent_noGeoIp() {
-        Event event = Event
-                .now()
-                .type("TEST_CASE")
-                .property("property-1", "value")
-                .build();
+        Future<Message<JsonObject>> messageFuture = getMessageFuture(null);
 
-        processor.process(event);
-
-        Assert.assertNotNull(event.properties());
-        Assert.assertNotNull(event.properties().get("property-1"));
+        assertTrue(messageFuture.failed());
+        assertTrue(messageFuture.cause() instanceof ReplyException);
+        assertEquals(messageFuture.cause().getMessage(), "Unexpected error while resolving IP: {}");
     }
 
     @Test
     public void shouldProcessEvent_withGeoIp_missingProperty() {
-        Event event = Event
-                .now()
-                .type("TEST_CASE")
-                .property("property-1", "value")
-                .context("geoip", "ip")
-                .build();
+        Future<Message<JsonObject>> messageFuture = getMessageFuture("");
 
-        processor.process(event);
-
-        Assert.assertNotNull(event.properties());
+        assertTrue(messageFuture.failed());
+        assertTrue(messageFuture.cause() instanceof ReplyException);
+        assertEquals(messageFuture.cause().getMessage(), "Unexpected error while resolving IP: {}");
     }
-    */
+
+    @Test
+    public void shouldProcessEvent_withGeoIp_notAnIp() {
+        Future<Message<JsonObject>> messageFuture = getMessageFuture("gravitee.io");
+
+        assertTrue(messageFuture.failed());
+        assertTrue(messageFuture.cause() instanceof ReplyException);
+        assertEquals(messageFuture.cause().getLocalizedMessage(), "Unexpected error while resolving IP: {}");
+    }
+
+    @Test
+    public void shouldProcessEvent_withGeoIp_wrongIp() {
+        Future<Message<JsonObject>> messageFuture = getMessageFuture("127.0.0.1");
+
+        assertTrue(messageFuture.failed());
+        assertTrue(messageFuture.cause() instanceof ReplyException);
+        assertEquals(messageFuture.cause().getMessage(), "The address 127.0.0.1 is not in the database.");
+    }
 
     @Test
     public void shouldProcessEvent_withGeoIp_ipProperty() {
+        Future<Message<JsonObject>> messageFuture = getMessageFuture(GRAVITEE_IO_WEBSITE_IP);
 
-        /*
-        processor.resolve( "216.58.206.227");
+        assertTrue(messageFuture.succeeded());
 
-        Assert.assertNotNull(event.properties());
-        Assert.assertEquals("216.58.206.227", event.properties().get("ip"));
-        Assert.assertEquals("US", event.properties().get("ip.country_iso_code"));
-         */
+        final JsonObject body = messageFuture.result().body();
+        assertNotNull(body);
+        assertEquals(body.getString("country_iso_code"), "US");
+        assertEquals(body.getString("country_name"), "United States");
+        assertEquals(body.getString("continent_name"), "North America");
+        assertEquals(body.getString("region_name"), "Washington");
+        assertEquals(body.getString("city_name"), "Seattle");
+        assertEquals(body.getString("timezone"), "America/Los_Angeles");
+        assertEquals(body.getDouble("lat"), 47.54D, 0);
+        assertEquals(body.getDouble("lon"), -122.3032D, 0);
+    }
+
+    private Future<Message<JsonObject>> getMessageFuture(String ipMessage) {
+        var messageFuture = vertx.eventBus().<JsonObject>request(GeoIPService.GEOIP_SERVICE, ipMessage);
+        while (!messageFuture.isComplete()) ;
+        return messageFuture;
     }
 }

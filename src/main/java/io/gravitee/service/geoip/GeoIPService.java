@@ -18,13 +18,12 @@ package io.gravitee.service.geoip;
 import com.maxmind.db.CHMCache;
 import com.maxmind.geoip2.DatabaseReader;
 import com.maxmind.geoip2.exception.AddressNotFoundException;
+import com.maxmind.geoip2.exception.GeoIp2Exception;
 import com.maxmind.geoip2.model.CityResponse;
 import com.maxmind.geoip2.record.*;
 import io.gravitee.common.service.AbstractService;
 import io.gravitee.service.geoip.utils.InetAddresses;
-import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
-import io.vertx.core.eventbus.Message;
 import io.vertx.core.eventbus.MessageConsumer;
 import io.vertx.core.json.JsonObject;
 import org.slf4j.Logger;
@@ -36,7 +35,6 @@ import java.net.InetAddress;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.BiConsumer;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -46,16 +44,18 @@ public class GeoIPService extends AbstractService<GeoIPService> {
 
     private final Logger logger = LoggerFactory.getLogger(GeoIPService.class);
 
-    private final static String GEOIP_SERVICE = "service:geoip";
-
+    public final static String GEOIP_SERVICE = "service:geoip";
     private static final String CITY_DB_TYPE = "GeoLite2-City";
 
-    private Map<String, DatabaseReader> readers = new HashMap<>();
+    private final Map<String, DatabaseReader> readers = new HashMap<>();
+    private MessageConsumer<String> consumer;
+
+    private final Vertx vertx;
 
     @Autowired
-    private Vertx vertx;
-
-    private MessageConsumer<String> consumer;
+    public GeoIPService(Vertx vertx) {
+        this.vertx = vertx;
+    }
 
     @Override
     protected String name() {
@@ -71,39 +71,23 @@ public class GeoIPService extends AbstractService<GeoIPService> {
                 .withCache(new CHMCache())
                 .build());
 
-        consumer = vertx.eventBus().consumer(GEOIP_SERVICE, new Handler<Message<String>>() {
-            @Override
-            public void handle(Message<String> message) {
+        consumer = vertx.eventBus().consumer(GEOIP_SERVICE, message -> {
+            try {
+                InetAddress ipAddress = InetAddresses.forString(message.body());
+                JsonObject geoData = retrieveCityGeoData(ipAddress);
 
-                try {
-                    InetAddress ipAddress = InetAddresses.forString(message.body());
-                    JsonObject geoData = retrieveCityGeoData(ipAddress);
-
-                    message.reply(geoData);
-                } catch (AddressNotFoundException anfe) {
-                    // Silent exception to avoid unnecessary logs
-                    message.fail(-1, anfe.getMessage());
-                } catch (Exception ex) {
-                    logger.error("Unexpected error while resolving IP: {}", message.body(), ex);
-                    message.fail(-1, "Unexpected error while resolving IP: {}");
-                }
+                message.reply(geoData);
+            } catch (AddressNotFoundException anfe) {
+                // Silent exception to avoid unnecessary logs
+                message.fail(-1, anfe.getMessage());
+            } catch (Exception ex) {
+                logger.error("Unexpected error while resolving IP: {}", message.body(), ex);
+                message.fail(-1, "Unexpected error while resolving IP: {}");
             }
         });
     }
 
-    void resolve(String ip) {
-        try {
-            InetAddress ipAddress = InetAddresses.forString(ip);
-            JsonObject geoData = retrieveCityGeoData(ipAddress);
-
-            System.out.println(geoData);
-            // Silent exception to avoid unnecessary logs
-        } catch (Exception ex) {
-            logger.error("Unexpected error while resolving IP: {}", ip, ex);
-        }
-    }
-
-    private JsonObject retrieveCityGeoData(InetAddress ipAddress) throws Exception {
+    private JsonObject retrieveCityGeoData(InetAddress ipAddress) throws IOException, GeoIp2Exception {
         JsonObject geo = new JsonObject();
 
         CityResponse response = readers.get(CITY_DB_TYPE).city(ipAddress);
@@ -140,7 +124,6 @@ public class GeoIPService extends AbstractService<GeoIPService> {
                     break;
             }
         }
-
         return geo;
     }
 
@@ -152,14 +135,11 @@ public class GeoIPService extends AbstractService<GeoIPService> {
             consumer.unregister();
         }
 
-        readers.forEach(new BiConsumer<String, DatabaseReader>() {
-            @Override
-            public void accept(String databaseType, DatabaseReader databaseReader) {
-                try {
-                    databaseReader.close();
-                } catch (IOException ioe) {
-                    logger.error("Unexpected error while closing GeoIP database", ioe);
-                }
+        readers.forEach((databaseType, databaseReader) -> {
+            try {
+                databaseReader.close();
+            } catch (IOException ioe) {
+                logger.error("Unexpected error while closing GeoIP database", ioe);
             }
         });
     }
