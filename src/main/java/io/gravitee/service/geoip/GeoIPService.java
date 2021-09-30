@@ -20,7 +20,11 @@ import com.maxmind.geoip2.DatabaseReader;
 import com.maxmind.geoip2.exception.AddressNotFoundException;
 import com.maxmind.geoip2.exception.GeoIp2Exception;
 import com.maxmind.geoip2.model.CityResponse;
-import com.maxmind.geoip2.record.*;
+import com.maxmind.geoip2.record.City;
+import com.maxmind.geoip2.record.Continent;
+import com.maxmind.geoip2.record.Country;
+import com.maxmind.geoip2.record.Location;
+import com.maxmind.geoip2.record.Subdivision;
 import io.gravitee.common.service.AbstractService;
 import io.gravitee.service.geoip.utils.InetAddresses;
 import io.vertx.core.Vertx;
@@ -82,7 +86,7 @@ public class GeoIPService extends AbstractService<GeoIPService> {
                 message.fail(-1, anfe.getMessage());
             } catch (Exception ex) {
                 logger.error("Unexpected error while resolving IP: {}", message.body(), ex);
-                message.fail(-1, "Unexpected error while resolving IP: {}");
+                message.fail(-1, "Unexpected error while resolving IP {" + message.body() + "}");
             }
         });
     }

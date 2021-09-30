@@ -62,7 +62,7 @@ public class GeoIPServiceTest {
 
         assertTrue(messageFuture.failed());
         assertTrue(messageFuture.cause() instanceof ReplyException);
-        assertEquals(messageFuture.cause().getMessage(), "Unexpected error while resolving IP: {}");
+        assertEquals(messageFuture.cause().getMessage(), "Unexpected error while resolving IP {null}");
     }
 
     @Test
@@ -71,7 +71,7 @@ public class GeoIPServiceTest {
 
         assertTrue(messageFuture.failed());
         assertTrue(messageFuture.cause() instanceof ReplyException);
-        assertEquals(messageFuture.cause().getMessage(), "Unexpected error while resolving IP: {}");
+        assertEquals(messageFuture.cause().getMessage(), "Unexpected error while resolving IP {}");
     }
 
     @Test
@@ -80,7 +80,7 @@ public class GeoIPServiceTest {
 
         assertTrue(messageFuture.failed());
         assertTrue(messageFuture.cause() instanceof ReplyException);
-        assertEquals(messageFuture.cause().getLocalizedMessage(), "Unexpected error while resolving IP: {}");
+        assertEquals(messageFuture.cause().getLocalizedMessage(), "Unexpected error while resolving IP {gravitee.io}");
     }
 
     @Test
@@ -103,11 +103,11 @@ public class GeoIPServiceTest {
         assertEquals(body.getString("country_iso_code"), "US");
         assertEquals(body.getString("country_name"), "United States");
         assertEquals(body.getString("continent_name"), "North America");
-        assertEquals(body.getString("region_name"), "Washington");
-        assertEquals(body.getString("city_name"), "Seattle");
-        assertEquals(body.getString("timezone"), "America/Los_Angeles");
-        assertEquals(body.getDouble("lat"), 47.54D, 0);
-        assertEquals(body.getDouble("lon"), -122.3032D, 0);
+        assertEquals(body.getString("region_name"), null);
+        assertEquals(body.getString("city_name"), null);
+        assertEquals(body.getString("timezone"), "America/Chicago");
+        assertEquals(body.getDouble("lat"), 37.751, 0);
+        assertEquals(body.getDouble("lon"), -97.822, 0);
     }
 
     private Future<Message<JsonObject>> getMessageFuture(String ipMessage) {
