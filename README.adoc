@@ -1,0 +1,13 @@
+= GeoIP service
+
+image:https://img.shields.io/badge/License-Apache%202.0-blue.svg["License", link="https://github.com/gravitee-io/gravitee-service-geoip/blob/master/LICENSE"]
+image:https://circleci.com/gh/gravitee-io/gravitee-service-geoip.svg?style=svg["CircleCI", link="https://circleci.com/gh/gravitee-io/gravitee-service-geoip"]
+
+== Description
+
+You must use the `service-geoip` when you need to load the `geoip` databases in memory, so you need to adjust the JVM Heap settings of your AM or APIM Gateways accordingly.
+It's required to use the `geoip-filtering` policy in APIM and for `Adaptive Multi-Factor Authentication` in AM.
+
+== Compatibility
+
+If you use an APIM < 3.10, only 1.0.x versions are compatible
