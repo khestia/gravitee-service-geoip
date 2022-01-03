@@ -11,3 +11,16 @@ It's required to use the `geoip-filtering` policy in APIM and for `Adaptive Mult
 == Compatibility
 
 If you use an APIM < 3.10, only 1.0.x versions are compatible
+
+After version 1.1.0 you can use this configuration within your gateway to choose you own file, to watch it so when
+changed it is reloaded and the cache capacity.
+
+```yaml
+geoip:
+  database:
+    city:
+      filename: /path/to/GeoLite2-City.mmdb #if null defaults to the embedded db
+      watch: true  #if null defaults to false
+      cache:
+        capacity: 8200  #if null defaults to 4096
+```
