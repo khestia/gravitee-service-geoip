@@ -12,8 +12,8 @@ It's required to use the `geoip-filtering` policy in APIM and for `Adaptive Mult
 
 If you use an APIM < 3.10, only 1.0.x versions are compatible
 
-After version 1.1.0 you can use this configuration within your gateway to choose you own file, to watch it so when
-changed it is reloaded and the cache capacity.
+After version 1.1.0 you can use this configuration within your gateway to choose your own file, to watch it so when
+changed it is reloaded and modify the cache capacity.
 
 ```yaml
 geoip:
