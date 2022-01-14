@@ -57,11 +57,11 @@ public class InetAddresses {
                 hasDot = true;
             } else if (c == ':') {
                 if (hasDot) {
-                    return null;  // Colons must not appear after dots.
+                    return null; // Colons must not appear after dots.
                 }
                 hasColon = true;
             } else if (Character.digit(c, 16) == -1) {
-                return null;  // Everything else must be a decimal or hex digit.
+                return null; // Everything else must be a decimal or hex digit.
             }
         }
 
@@ -135,23 +135,23 @@ public class InetAddresses {
         for (int i = 1; i < parts.length - 1; i++) {
             if (parts[i].length() == 0) {
                 if (skipIndex >= 0) {
-                    return null;  // Can't have more than one ::
+                    return null; // Can't have more than one ::
                 }
                 skipIndex = i;
             }
         }
 
-        int partsHi;  // Number of parts to copy from above/before the "::"
-        int partsLo;  // Number of parts to copy from below/after the "::"
+        int partsHi; // Number of parts to copy from above/before the "::"
+        int partsLo; // Number of parts to copy from below/after the "::"
         if (skipIndex >= 0) {
             // If we found a "::", then check if it also covers the endpoints.
             partsHi = skipIndex;
             partsLo = parts.length - skipIndex - 1;
             if (parts[0].length() == 0 && --partsHi != 0) {
-                return null;  // ^: requires ^::
+                return null; // ^: requires ^::
             }
             if (parts[parts.length - 1].length() == 0 && --partsLo != 0) {
-                return null;  // :$ requires ::$
+                return null; // :$ requires ::$
             }
         } else {
             // Otherwise, allocate the entire address to partsHi.  The endpoints
@@ -258,7 +258,7 @@ public class InetAddresses {
         byte[] bytes = ip.getAddress();
         int[] hextets = new int[IPV6_PART_COUNT];
         for (int i = 0; i < hextets.length; i++) {
-            hextets[i] =  (bytes[2 * i] & 255) << 8 | bytes[2 * i + 1] & 255;
+            hextets[i] = (bytes[2 * i] & 255) << 8 | bytes[2 * i + 1] & 255;
         }
         compressLongestRunOfZeroes(hextets);
         return hextetsToIPv6String(hextets);

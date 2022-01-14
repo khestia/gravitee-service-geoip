@@ -20,7 +20,6 @@ import com.maxmind.geoip2.exception.GeoIp2Exception;
 import com.maxmind.geoip2.model.CityResponse;
 import com.maxmind.geoip2.record.*;
 import io.vertx.core.json.JsonObject;
-
 import java.io.IOException;
 import java.net.InetAddress;
 import java.util.EnumSet;
@@ -30,7 +29,6 @@ import java.util.EnumSet;
  * @author GraviteeSource Team
  */
 public class GeoIpFinderService {
-
 
     public JsonObject retrieveCityGeoData(InetAddress ipAddress, DatabaseReader databaseReader) throws IOException, GeoIp2Exception {
         JsonObject geo = new JsonObject();

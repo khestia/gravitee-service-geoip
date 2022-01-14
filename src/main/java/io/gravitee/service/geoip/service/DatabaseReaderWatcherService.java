@@ -16,12 +16,16 @@
 
 package io.gravitee.service.geoip.service;
 
+import static com.sun.nio.file.SensitivityWatchEventModifier.HIGH;
+import static io.gravitee.service.geoip.service.DatabaseReaderService.CITY_DB_TYPE;
+import static io.gravitee.service.geoip.service.DatabaseReaderService.DATABASES_GEO_LITE_2_CITY_MMDB;
+import static java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY;
+import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
+
 import com.maxmind.geoip2.DatabaseReader;
 import com.maxmind.geoip2.DatabaseReader.Builder;
 import io.gravitee.service.geoip.cache.GeoIpCache;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -37,13 +41,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
-
-import static com.sun.nio.file.SensitivityWatchEventModifier.HIGH;
-import static io.gravitee.service.geoip.service.DatabaseReaderService.CITY_DB_TYPE;
-import static io.gravitee.service.geoip.service.DatabaseReaderService.DATABASES_GEO_LITE_2_CITY_MMDB;
-import static java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY;
-import static java.util.Objects.isNull;
-import static java.util.Objects.nonNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
@@ -61,10 +60,10 @@ public class DatabaseReaderWatcherService implements Runnable {
     private boolean started;
 
     public DatabaseReaderWatcherService(
-            DatabaseReaderService databaseReaderService,
-            GeoIpFinderService geoIpFinderService,
-            GeoIpCache cache,
-            String cityNameDatabase
+        DatabaseReaderService databaseReaderService,
+        GeoIpFinderService geoIpFinderService,
+        GeoIpCache cache,
+        String cityNameDatabase
     ) {
         this.cache = cache;
         this.databaseReaderService = databaseReaderService;
@@ -79,15 +78,17 @@ public class DatabaseReaderWatcherService implements Runnable {
             final File file = new File(cityNameDatabase);
             Path path = file.toPath();
             Path directory = path.getParent();
-            directory.register(watcherService, new Kind[]{ENTRY_MODIFY}, HIGH);
+            directory.register(watcherService, new Kind[] { ENTRY_MODIFY }, HIGH);
             while (started) {
                 var watchKey = watcherService.poll(200, TimeUnit.MILLISECONDS);
                 if (nonNull(watchKey)) {
-                    watchKey.pollEvents().stream()
-                            .map(watchEvent -> ((WatchEvent<Path>) watchEvent).context().getFileName())
-                            .filter(path.getFileName()::equals)
-                            .findAny()
-                            .ifPresent(__ -> loadDatabase(cityNameDatabase, CITY_DB_TYPE, DATABASES_GEO_LITE_2_CITY_MMDB));
+                    watchKey
+                        .pollEvents()
+                        .stream()
+                        .map(watchEvent -> ((WatchEvent<Path>) watchEvent).context().getFileName())
+                        .filter(path.getFileName()::equals)
+                        .findAny()
+                        .ifPresent(__ -> loadDatabase(cityNameDatabase, CITY_DB_TYPE, DATABASES_GEO_LITE_2_CITY_MMDB));
                     if (!watchKey.reset()) {
                         throw new InterruptedException("watchKey could not reset");
                     }
@@ -115,10 +116,11 @@ public class DatabaseReaderWatcherService implements Runnable {
         LOG.info("Loading {} database", cityDbType);
         var optionalReader = loadReader(databaseName, false);
         optionalReader.ifPresentOrElse(
-                // If present we load the new reader
-                refreshAndLoadDatabase(cityDbType),
-                // Unless there is no reader present (we might have a working reader before) we load the embedded db
-                loadEmbeddedDefaultReader(cityDbType, databaseClasspathName));
+            // If present we load the new reader
+            refreshAndLoadDatabase(cityDbType),
+            // Unless there is no reader present (we might have a working reader before) we load the embedded db
+            loadEmbeddedDefaultReader(cityDbType, databaseClasspathName)
+        );
     }
 
     private Consumer<DatabaseReader> refreshAndLoadDatabase(String cityDbType) {

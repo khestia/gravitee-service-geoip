@@ -16,16 +16,15 @@
 
 package io.gravitee.service.geoip.cache;
 
-import io.gravitee.service.geoip.utils.InetAddresses;
-import io.vertx.core.json.JsonObject;
-import org.junit.Before;
-import org.junit.Test;
-
-import java.net.InetAddress;
-
 import static java.lang.String.format;
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertFalse;
+
+import io.gravitee.service.geoip.utils.InetAddresses;
+import io.vertx.core.json.JsonObject;
+import java.net.InetAddress;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)

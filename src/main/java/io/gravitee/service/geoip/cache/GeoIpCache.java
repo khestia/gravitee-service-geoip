@@ -19,7 +19,6 @@ package io.gravitee.service.geoip.cache;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import io.vertx.core.json.JsonObject;
-
 import java.net.InetAddress;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -33,10 +32,7 @@ public class GeoIpCache {
     private final Cache<InetAddress, JsonObject> cache;
 
     public GeoIpCache(int capacity) {
-        cache = CacheBuilder.newBuilder()
-                .expireAfterWrite(10, TimeUnit.HOURS)
-                .maximumSize(capacity)
-                .build();
+        cache = CacheBuilder.newBuilder().expireAfterWrite(10, TimeUnit.HOURS).maximumSize(capacity).build();
     }
 
     public JsonObject get(InetAddress ip) {

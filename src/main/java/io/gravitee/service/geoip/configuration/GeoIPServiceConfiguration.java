@@ -17,9 +17,9 @@
 package io.gravitee.service.geoip.configuration;
 
 import io.gravitee.service.geoip.cache.GeoIpCache;
-import io.gravitee.service.geoip.service.DatabaseReaderWatcherService;
 import io.gravitee.service.geoip.service.DatabaseReaderService;
 import io.gravitee.service.geoip.service.DatabaseReaderServiceImpl;
+import io.gravitee.service.geoip.service.DatabaseReaderWatcherService;
 import io.gravitee.service.geoip.service.GeoIpFinderService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -58,9 +58,10 @@ public class GeoIPServiceConfiguration {
 
     @Bean
     public DatabaseReaderWatcherService databaseReaderCronService(
-            GeoIpCache geoIpCache,
-            GeoIpFinderService geoIpFinderService,
-            DatabaseReaderService databaseReaderService) {
+        GeoIpCache geoIpCache,
+        GeoIpFinderService geoIpFinderService,
+        DatabaseReaderService databaseReaderService
+    ) {
         return new DatabaseReaderWatcherService(databaseReaderService, geoIpFinderService, geoIpCache, filename).start(watch);
     }
 }

@@ -17,7 +17,6 @@
 package io.gravitee.service.geoip.service;
 
 import com.maxmind.geoip2.DatabaseReader;
-
 import java.io.IOException;
 
 /**
@@ -25,13 +24,12 @@ import java.io.IOException;
  * @author GraviteeSource Team
  */
 public interface DatabaseReaderService {
-
     String CITY_DB_TYPE = "GeoLite2-City";
     String DATABASES_GEO_LITE_2_CITY_MMDB = "/databases/GeoLite2-City.mmdb";
 
-     void put(String key, DatabaseReader value);
+    void put(String key, DatabaseReader value);
 
-     DatabaseReader get(String key);
+    DatabaseReader get(String key);
 
-     void close() throws IOException;
+    void close() throws IOException;
 }

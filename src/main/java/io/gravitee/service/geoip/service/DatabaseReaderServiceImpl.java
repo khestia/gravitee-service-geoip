@@ -17,7 +17,6 @@
 package io.gravitee.service.geoip.service;
 
 import com.maxmind.geoip2.DatabaseReader;
-
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;

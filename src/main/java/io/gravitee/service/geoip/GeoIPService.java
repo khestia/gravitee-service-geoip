@@ -15,6 +15,8 @@
  */
 package io.gravitee.service.geoip;
 
+import static java.util.Objects.isNull;
+
 import com.maxmind.geoip2.DatabaseReader;
 import com.maxmind.geoip2.exception.AddressNotFoundException;
 import com.maxmind.geoip2.exception.GeoIp2Exception;
@@ -27,13 +29,10 @@ import io.gravitee.service.geoip.utils.InetAddresses;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.MessageConsumer;
 import io.vertx.core.json.JsonObject;
+import java.net.InetAddress;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-
-import java.net.InetAddress;
-
-import static java.util.Objects.isNull;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -45,7 +44,7 @@ public class GeoIPService extends AbstractService<GeoIPService> {
     private static final String GEO_IP_RESOLVER_SERVICE = "GeoIP Resolver Service";
     private final Logger logger = LoggerFactory.getLogger(GeoIPService.class);
 
-    public final static String GEOIP_SERVICE = "service:geoip";
+    public static final String GEOIP_SERVICE = "service:geoip";
     private static final String CITY_DB_TYPE = "GeoLite2-City";
 
     private final DatabaseReaderService databaseReaderService;
@@ -58,11 +57,12 @@ public class GeoIPService extends AbstractService<GeoIPService> {
     private final Vertx vertx;
 
     @Autowired
-    public GeoIPService(Vertx vertx,
-                        DatabaseReaderService databaseReaderService,
-                        GeoIpFinderService geoIPFinderService,
-                        GeoIpCache cache,
-                        DatabaseReaderWatcherService databaseReaderWatcherService
+    public GeoIPService(
+        Vertx vertx,
+        DatabaseReaderService databaseReaderService,
+        GeoIpFinderService geoIPFinderService,
+        GeoIpCache cache,
+        DatabaseReaderWatcherService databaseReaderWatcherService
     ) {
         this.vertx = vertx;
         this.geoIPFinderService = geoIPFinderService;
@@ -80,30 +80,36 @@ public class GeoIPService extends AbstractService<GeoIPService> {
     protected void doStart() throws Exception {
         super.doStart();
 
-        consumer = vertx.eventBus().consumer(GEOIP_SERVICE, message -> {
-            try {
-                InetAddress ipAddress = InetAddresses.forString(message.body());
-                final DatabaseReader databaseReader = databaseReaderService.get(CITY_DB_TYPE);
+        consumer =
+            vertx
+                .eventBus()
+                .consumer(
+                    GEOIP_SERVICE,
+                    message -> {
+                        try {
+                            InetAddress ipAddress = InetAddresses.forString(message.body());
+                            final DatabaseReader databaseReader = databaseReaderService.get(CITY_DB_TYPE);
 
-                if (isNull(databaseReader)) {
-                    throw new GeoIp2Exception("Database " + CITY_DB_TYPE + " not loaded");
-                }
+                            if (isNull(databaseReader)) {
+                                throw new GeoIp2Exception("Database " + CITY_DB_TYPE + " not loaded");
+                            }
 
-                JsonObject geoData = cache.get(ipAddress);
-                if (geoData == null) {
-                    geoData = geoIPFinderService.retrieveCityGeoData(ipAddress, databaseReader);
-                    cache.put(ipAddress, geoData);
-                }
+                            JsonObject geoData = cache.get(ipAddress);
+                            if (geoData == null) {
+                                geoData = geoIPFinderService.retrieveCityGeoData(ipAddress, databaseReader);
+                                cache.put(ipAddress, geoData);
+                            }
 
-                message.reply(geoData);
-            } catch (AddressNotFoundException anfe) {
-                // Silent exception to avoid unnecessary logs
-                message.fail(-1, anfe.getMessage());
-            } catch (Exception ex) {
-                logger.error("Unexpected error while resolving IP: {}", message.body(), ex);
-                message.fail(-1, "Unexpected error while resolving IP {" + message.body() + "}");
-            }
-        });
+                            message.reply(geoData);
+                        } catch (AddressNotFoundException anfe) {
+                            // Silent exception to avoid unnecessary logs
+                            message.fail(-1, anfe.getMessage());
+                        } catch (Exception ex) {
+                            logger.error("Unexpected error while resolving IP: {}", message.body(), ex);
+                            message.fail(-1, "Unexpected error while resolving IP {" + message.body() + "}");
+                        }
+                    }
+                );
     }
 
     @Override

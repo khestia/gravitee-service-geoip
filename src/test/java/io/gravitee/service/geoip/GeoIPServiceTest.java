@@ -15,6 +15,12 @@
  */
 package io.gravitee.service.geoip;
 
+import static io.gravitee.service.geoip.service.DatabaseReaderService.CITY_DB_TYPE;
+import static io.gravitee.service.geoip.service.DatabaseReaderService.DATABASES_GEO_LITE_2_CITY_MMDB;
+import static org.junit.Assert.*;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.mock;
+
 import com.maxmind.geoip2.DatabaseReader;
 import io.gravitee.service.geoip.cache.GeoIpCache;
 import io.gravitee.service.geoip.service.DatabaseReaderServiceImpl;
@@ -25,17 +31,10 @@ import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.eventbus.ReplyException;
 import io.vertx.core.json.JsonObject;
+import java.io.IOException;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
-import java.io.IOException;
-
-import static io.gravitee.service.geoip.service.DatabaseReaderService.CITY_DB_TYPE;
-import static io.gravitee.service.geoip.service.DatabaseReaderService.DATABASES_GEO_LITE_2_CITY_MMDB;
-import static org.junit.Assert.*;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.mock;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -56,7 +55,8 @@ public class GeoIPServiceTest {
         var databaseReaderWatcherService = mock(DatabaseReaderWatcherService.class);
         doNothing().when(databaseReaderWatcherService).close();
 
-        processor = new GeoIPService(vertx, databaseReaderService, new GeoIpFinderService(), new GeoIpCache(5), databaseReaderWatcherService);
+        processor =
+            new GeoIPService(vertx, databaseReaderService, new GeoIpFinderService(), new GeoIpCache(5), databaseReaderWatcherService);
         processor.start();
     }
 
@@ -132,7 +132,7 @@ public class GeoIPServiceTest {
 
     private Future<Message<JsonObject>> getMessageFuture(String ipMessage) {
         var messageFuture = vertx.eventBus().<JsonObject>request(GeoIPService.GEOIP_SERVICE, ipMessage);
-        while (!messageFuture.isComplete()) ;
+        while (!messageFuture.isComplete());
         return messageFuture;
     }
 }
