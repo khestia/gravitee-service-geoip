@@ -13,9 +13,17 @@ endif::[]
 You must use the `service-geoip` when you need to load the `geoip` databases in memory, so you need to adjust the JVM Heap settings of your AM or APIM Gateways accordingly.
 It's required to use the `geoip-filtering` policy in APIM and for `Adaptive Multi-Factor Authentication` in AM.
 
-== Compatibility
+== Compatibility with APIM
 
-If you use an APIM < 3.10, only 1.0.x versions are compatible
+|===
+|Plugin version | APIM version
+
+| 1.2.x and upper               | 3.15.x to latest
+| Up to 1.1.x                   | 3.10.x to 3.14.x
+| Up to 1.0.x                   | Up to 3.9.x
+|===
+
+== Configuration
 
 After version 1.1.0 you can use this configuration within your gateway to choose your own file, to watch it so when
 changed it is reloaded and modify the cache capacity.
